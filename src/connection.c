@@ -81,7 +81,7 @@ int pysqlite_connection_init(pysqlite_Connection* self, PyObject* args, PyObject
     }
 
     self->initialized = 1;
-
+    spatialite_init(0);
     self->begin_statement = NULL;
 
     self->statement_cache = NULL;

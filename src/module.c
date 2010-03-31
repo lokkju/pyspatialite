@@ -410,7 +410,7 @@ PyMODINIT_FUNC init_sqlite(void)
         Py_DECREF(tmp_obj);
     }
 
-    if (!(tmp_obj = PyString_FromString(PYSQLITE_VERSION))) {
+    if (!(tmp_obj = PyString_FromString(PYSPATIALITE_VERSION))) {
         goto error;
     }
     PyDict_SetItemString(dict, "version", tmp_obj);

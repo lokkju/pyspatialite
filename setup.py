@@ -2,8 +2,10 @@
 # setup.py: the distutils script
 #
 # Copyright (C) 2004-2007 Gerhard Häring <gh@ghaering.de>
+# Copyright (C) 20010 Lokkju Brennr <lokkju@lokkju.com>
 #
-# This file is part of pysqlite.
+# This file was part of pysqlite
+# This file is part of pyspatialite.
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -24,6 +26,7 @@
 import glob, os, re, sys
 import urllib
 import zipfile
+import string
 
 from distutils.core import setup, Extension, Command
 from distutils.command.build import build
@@ -33,7 +36,7 @@ import cross_bdist_wininst
 
 # If you need to change anything, it should be enough to change setup.cfg.
 
-sqlite = "sqlite"
+sqlite = "spatialite"
 
 sources = ["src/module.c", "src/connection.c", "src/cursor.c", "src/cache.c",
            "src/microprotocols.c", "src/prepare_protocol.c", "src/statement.c",
@@ -41,22 +44,22 @@ sources = ["src/module.c", "src/connection.c", "src/cursor.c", "src/cache.c",
 
 include_dirs = []
 library_dirs = []
-libraries = []
+libraries = ['geos','geos_c','proj']
 runtime_library_dirs = []
 extra_objects = []
 define_macros = []
 
 long_description = \
-"""Python interface to SQLite 3
+"""Python interface to SQLite 3 + Spatialite
 
-pysqlite is an interface to the SQLite 3.x embedded relational database engine.
+pyspatialite is an interface to the SQLite 3.x embedded relational database engine with spatialite extensions.
 It is almost fully compliant with the Python database API version 2.0 also
-exposes the unique features of SQLite."""
+exposes the unique features of SQLite and spatialite."""
 
 if sys.platform != "win32":
-    define_macros.append(('MODULE_NAME', '"pysqlite2.dbapi2"'))
+    define_macros.append(('MODULE_NAME', '"spatialite.dbapi2"'))
 else:
-    define_macros.append(('MODULE_NAME', '\\"pysqlite2.dbapi2\\"'))
+    define_macros.append(('MODULE_NAME', '\\"spatialite.dbapi2\\"'))
 
 class DocBuilder(Command):
     description = "Builds the documentation"
@@ -82,102 +85,96 @@ class DocBuilder(Command):
 AMALGAMATION_ROOT = "amalgamation"
 
 def get_amalgamation():
-    """Download the SQLite amalgamation if it isn't there, already."""
+    """Download the Spatialite amalgamation if it isn't there, already."""
     if os.path.exists(AMALGAMATION_ROOT):
         return
     os.mkdir(AMALGAMATION_ROOT)
     print "Downloading amalgation."
 
     # find out what's current amalgamation ZIP file
-    download_page = urllib.urlopen("http://sqlite.org/download.html").read()
-    pattern = re.compile("(sqlite-amalgamation.*?\.zip)")
+    download_page = urllib.urlopen("http://www.gaia-gis.it/spatialite/sources.html").read()
+    pattern = re.compile("(libspatialite-amalgamation.*?\.zip)")
     download_file = pattern.findall(download_page)[0]
-    amalgamation_url = "http://sqlite.org/" + download_file
-
+    amalgamation_url = "http://www.gaia-gis.it/spatialite/" + download_file
+    zip_dir = string.replace(download_file,'.zip','')
     # and download it
     urllib.urlretrieve(amalgamation_url, "tmp.zip")
 
     zf = zipfile.ZipFile("tmp.zip")
-    files = ["sqlite3.c", "sqlite3.h"]
+    files = ["sqlite3.c", "headers/spatialite/sqlite3.h", "spatialite.c", "headers/spatialite/sqlite3ext.h","headers/spatialite/spatialite.h","headers/spatialite/gaiaaux.h","headers/spatialite/gaiaexif.h","headers/spatialite/gaiageo.h"]
     for fn in files:
         print "Extracting", fn
-        outf = open(AMALGAMATION_ROOT + os.sep + fn, "wb")
-        outf.write(zf.read(fn))
+        outf = open(AMALGAMATION_ROOT + os.sep + string.split(fn,'/')[-1], "wb")
+        outf.write(zf.read(zip_dir + '/' + fn))
         outf.close()
     zf.close()
     os.unlink("tmp.zip")
 
-class AmalgamationBuilder(build):
-    description = "Build a statically built pysqlite using the amalgamtion."
-
-    def __init__(self, *args, **kwargs):
-        MyBuildExt.amalgamation = True
-        build.__init__(self, *args, **kwargs)
-
 class MyBuildExt(build_ext):
-    amalgamation = False
 
     def build_extension(self, ext):
-        if self.amalgamation:
-            get_amalgamation()
-            ext.define_macros.append(("SQLITE_ENABLE_FTS3", "1"))   # build with fulltext search enabled
-            ext.define_macros.append(("SQLITE_ENABLE_RTREE", "1"))   # build with fulltext search enabled
-            ext.sources.append(os.path.join(AMALGAMATION_ROOT, "sqlite3.c"))
-            ext.include_dirs.append(AMALGAMATION_ROOT)
+        get_amalgamation()
+        ext.define_macros.append(("SQLITE_ENABLE_FTS3", "1"))   # build with fulltext search enabled
+        ext.define_macros.append(("SQLITE_ENABLE_RTREE", "1"))   # build with fulltext search enabled
+        ext.define_macros.append(("SQLITE_ENABLE_COLUMN_METADATA", "1"))   # build with fulltext search enabled
+        ext.sources.append(os.path.join(AMALGAMATION_ROOT, "sqlite3.c"))
+        ext.sources.append(os.path.join(AMALGAMATION_ROOT, "spatialite.c"))
+        ext.include_dirs.append(AMALGAMATION_ROOT)
         build_ext.build_extension(self, ext)
+        
 
-    def __setattr__(self, k, v):
-        # Make sure we don't link against the SQLite library, no matter what setup.cfg says
-        if self.amalgamation and k == "libraries":
-            v = None
-        self.__dict__[k] = v
+#    def __setattr__(self, k, v):
+#        # Make sure we don't link against the SQLite library, no matter what setup.cfg says
+#        if self.amalgamation and k == "libraries":
+#            v = None
+#        self.__dict__[k] = v
 
 def get_setup_args():
 
-    PYSQLITE_VERSION = None
+    PYSPATIALITE_VERSION = None
 
-    version_re = re.compile('#define PYSQLITE_VERSION "(.*)"')
+    version_re = re.compile('#define PYSPATIALITE_VERSION "(.*)"')
     f = open(os.path.join("src", "module.h"))
     for line in f:
         match = version_re.match(line)
         if match:
-            PYSQLITE_VERSION = match.groups()[0]
-            PYSQLITE_MINOR_VERSION = ".".join(PYSQLITE_VERSION.split('.')[:2])
+            PYSPATIALITE_VERSION = match.groups()[0]
+            PYSPATIALITE_MINOR_VERSION = ".".join(PYSPATIALITE_VERSION.split('.')[:2])
             break
     f.close()
 
-    if not PYSQLITE_VERSION:
-        print "Fatal error: PYSQLITE_VERSION could not be detected!"
+    if not PYSPATIALITE_VERSION:
+        print "Fatal error: PYSPATIALITE_VERSION could not be detected!"
         sys.exit(1)
 
-    data_files = [("pysqlite2-doc",
+    data_files = [("pyspatialite-doc",
                         glob.glob("doc/*.html") \
                       + glob.glob("doc/*.txt") \
                       + glob.glob("doc/*.css")),
-                   ("pysqlite2-doc/code",
+                   ("pyspatialite-doc/code",
                         glob.glob("doc/code/*.py"))]
 
-    py_modules = ["sqlite"]
+    py_modules = ["spatialite"]
     setup_args = dict(
-            name = "pysqlite",
-            version = PYSQLITE_VERSION,
-            description = "DB-API 2.0 interface for SQLite 3.x",
+            name = "pyspatialite",
+            version = PYSPATIALITE_VERSION,
+            description = "DB-API 2.0 interface for SQLite 3.x with Spatialite 2.x",
             long_description=long_description,
-            author = "Gerhard Haering",
-            author_email = "gh@ghaering.de",
+            author = "Lokkju Brennr",
+            author_email = "lokkju@lokkju.com",
             license = "zlib/libpng license",
             platforms = "ALL",
-            url = "http://pysqlite.googlecode.com/",
-            download_url = "http://code.google.com/p/pysqlite/downloads/list",
+            url = "http://pyspatialite.googlecode.com/",
+            download_url = "http://code.google.com/p/pyspatialite/downloads/list",
 
             # Description of the modules and packages in the distribution
-            package_dir = {"pysqlite2": "lib"},
-            packages = ["pysqlite2", "pysqlite2.test"] +
-                       (["pysqlite2.test.py25"], [])[sys.version_info < (2, 5)],
+            package_dir = {"pyspatialite": "lib"},
+            packages = ["pyspatialite", "pyspatialite.test"] +
+                       (["pyspatialite.test.py25"], [])[sys.version_info < (2, 5)],
             scripts=[],
             data_files = data_files,
 
-            ext_modules = [Extension( name="pysqlite2._sqlite",
+            ext_modules = [Extension( name="pyspatialite._spatialite",
                                       sources=sources,
                                       include_dirs=include_dirs,
                                       library_dirs=library_dirs,
@@ -187,7 +184,7 @@ def get_setup_args():
                                       define_macros=define_macros
                                       )],
             classifiers = [
-            "Development Status :: 5 - Production/Stable",
+            "Development Status :: 3 - Alpha",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: zlib/libpng License",
             "Operating System :: MacOS :: MacOS X",
@@ -200,7 +197,7 @@ def get_setup_args():
             cmdclass = {"build_docs": DocBuilder}
             )
 
-    setup_args["cmdclass"].update({"build_docs": DocBuilder, "build_ext": MyBuildExt, "build_static": AmalgamationBuilder, "cross_bdist_wininst": cross_bdist_wininst.bdist_wininst})
+    setup_args["cmdclass"].update({"build_docs": DocBuilder, "build_ext": MyBuildExt, "cross_bdist_wininst": cross_bdist_wininst.bdist_wininst})
     return setup_args
 
 def main():
