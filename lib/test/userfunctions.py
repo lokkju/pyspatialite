@@ -1,5 +1,5 @@
 #-*- coding: ISO-8859-1 -*-
-# pysqlite2/test/userfunctions.py: tests for user-defined functions and
+# pyspatialite/test/userfunctions.py: tests for user-defined functions and
 #                                  aggregates.
 #
 # Copyright (C) 2005-2007 Gerhard Häring <gh@ghaering.de>
@@ -23,7 +23,7 @@
 # 3. This notice may not be removed or altered from any source distribution.
 
 import unittest
-import pysqlite2.dbapi2 as sqlite
+import pyspatialite.dbapi2 as sqlite
 
 def func_returntext():
     return "foo"

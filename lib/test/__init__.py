@@ -1,5 +1,5 @@
 #-*- coding: ISO-8859-1 -*-
-# pysqlite2/test/__init__.py: the package containing the test suite
+# pyspatialite/test/__init__.py: the package containing the test suite
 #
 # Copyright (C) 2004-2007 Gerhard Häring <gh@ghaering.de>
 #
@@ -32,15 +32,15 @@ if os.path.exists("extended_setup.py"):
     print "-" * 75
     sys.exit(1)
 
-from pysqlite2.test import dbapi, types, userfunctions, factory, transactions,\
+from pyspatialite.test import dbapi, types, userfunctions, factory, transactions,\
     hooks, regression, dump
-from pysqlite2 import dbapi2 as sqlite
+from pyspatialite import dbapi2 as sqlite
 
 def suite():
     tests = [dbapi.suite(), types.suite(), userfunctions.suite(),
       factory.suite(), transactions.suite(), hooks.suite(), regression.suite(), dump.suite()]
     if sys.version_info >= (2, 5, 0):
-        from pysqlite2.test.py25 import py25tests
+        from pyspatialite.test.py25 import py25tests
         tests.append(py25tests.suite())
 
     return unittest.TestSuite(tuple(tests))

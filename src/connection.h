@@ -33,6 +33,8 @@
 #include "sqlite3.h"
 #include "spatialite.h"
 
+int spatialite_init(int verbose);
+
 typedef struct
 {
     PyObject_HEAD

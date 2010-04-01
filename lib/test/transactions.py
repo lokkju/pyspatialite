@@ -1,5 +1,5 @@
 #-*- coding: ISO-8859-1 -*-
-# pysqlite2/test/transactions.py: tests transactions
+# pyspatialite/test/transactions.py: tests transactions
 #
 # Copyright (C) 2005-2009 Gerhard Häring <gh@ghaering.de>
 #
@@ -23,7 +23,7 @@
 
 import sys
 import os, unittest
-import pysqlite2.dbapi2 as sqlite
+import pyspatialite.dbapi2 as sqlite
 
 def get_db_path():
     return "sqlite_testdb"

@@ -1,9 +1,9 @@
 #-*- coding: ISO-8859-1 -*-
-# pysqlite2/test/dbapi.py: tests for DB-API compliance
+# pyspatialite/test/dbapi.py: tests for DB-API compliance
 #
 # Copyright (C) 2004-2009 Gerhard Häring <gh@ghaering.de>
 #
-# This file is part of pysqlite.
+# This file is part of pyspatialite.
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -24,7 +24,7 @@
 import unittest
 import sys
 import threading
-import pysqlite2.dbapi2 as sqlite
+import pyspatialite.dbapi2 as sqlite
 
 class ModuleTests(unittest.TestCase):
     def CheckAPILevel(self):
@@ -299,7 +299,7 @@ class CursorTests(unittest.TestCase):
 
     def CheckRowcountSelect(self):
         """
-        pysqlite does not know the rowcount of SELECT statements, because we
+        pyspatialite does not know the rowcount of SELECT statements, because we
         don't fetch all rows after executing the select statement. The rowcount
         has thus to be -1.
         """
@@ -319,7 +319,7 @@ class CursorTests(unittest.TestCase):
 
     # Checks for executemany:
     # Sequences are required by the DB-API, iterators
-    # enhancements in pysqlite.
+    # enhancements in pyspatialite.
 
     def CheckExecuteManySequence(self):
         self.cu.executemany("insert into test(income) values (?)", [(x,) for x in range(100, 110)])

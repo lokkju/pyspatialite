@@ -1,5 +1,5 @@
 #-*- coding: ISO-8859-1 -*-
-# pysqlite2/test/hooks.py: tests for various SQLite-specific hooks
+# pyspatialite/test/hooks.py: tests for various SQLite-specific hooks
 #
 # Copyright (C) 2006-2007 Gerhard Häring <gh@ghaering.de>
 #
@@ -22,7 +22,7 @@
 # 3. This notice may not be removed or altered from any source distribution.
 
 import os, unittest
-import pysqlite2.dbapi2 as sqlite
+import pyspatialite.dbapi2 as sqlite
 
 class CollationTests(unittest.TestCase):
     def setUp(self):
