@@ -44,7 +44,7 @@ sources = ["src/module.c", "src/connection.c", "src/cursor.c", "src/cache.c",
 
 include_dirs = []
 library_dirs = []
-libraries = ['geos','geos_c','proj']
+libraries = ['geos','geos_c','proj','iconv']
 runtime_library_dirs = []
 extra_objects = []
 define_macros = []
