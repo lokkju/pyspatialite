@@ -25,7 +25,7 @@
 #define PYSQLITE_MODULE_H
 #include "Python.h"
 
-#define PYSPATIALITE_VERSION "2.6.1-spatialite.2.4.0-4"
+#define PYSPATIALITE_VERSION "2.6.2-spatialite.2.4.0-4"
 
 extern PyObject* pysqlite_Error;
 extern PyObject* pysqlite_Warning;

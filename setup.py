@@ -114,6 +114,16 @@ class MyBuildExt(build_ext):
 
     def build_extension(self, ext):
         get_amalgamation()
+        # sometimes iconv is built in, sometimes it isn't
+        if not self.compiler.has_function("iconv"):
+          ext.libraries.append("iconv")
+
+        #Default locations for Mac
+        ext.include_dirs.append("/Library/Frameworks/GEOS.framework/unix/include/")
+        ext.include_dirs.append("/Library/Frameworks/PROJ.framework/unix/include/")
+        ext.library_dirs.append("/Library/Frameworks/GEOS.framework/unix/lib")
+        ext.library_dirs.append("/Library/Frameworks/PROJ.framework/unix/lib")
+
         ext.define_macros.append(("SQLITE_ENABLE_FTS3", "1"))   # build with fulltext search enabled
         ext.define_macros.append(("SQLITE_ENABLE_RTREE", "1"))   # build with fulltext search enabled
         ext.define_macros.append(("SQLITE_ENABLE_COLUMN_METADATA", "1"))   # build with fulltext search enabled
@@ -165,8 +175,9 @@ def get_setup_args():
             license = "zlib/libpng license",
             platforms = "ALL",
             url = "http://pyspatialite.googlecode.com/",
-            download_url = "http://code.google.com/p/pyspatialite/downloads/list",
-
+            #download_url = "http://code.google.com/p/pyspatialite/downloads/list",
+            # no download_url, since pypi hosts it!
+            # download_url = "http://pyspatialite.googlecode.com/files/pyspatialite-" + PYSPATIALITE_VERSION + ".tar.gz"
             # Description of the modules and packages in the distribution
             package_dir = {"pyspatialite": "lib"},
             packages = ["pyspatialite", "pyspatialite.test"] +
