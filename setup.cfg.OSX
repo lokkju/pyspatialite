@@ -1,5 +1,0 @@
-[build_ext]
-#define=
-include_dirs=/Library/Frameworks/GEOS.framework/unix/include/:/Library/Frameworks/PROJ.framework/unix/include/
-library_dirs=/Library/Frameworks/GEOS.framework/unix/lib:/Library/Frameworks/PROJ.framework/unix/lib
-

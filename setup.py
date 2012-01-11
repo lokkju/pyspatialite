@@ -44,7 +44,7 @@ sources = ["src/module.c", "src/connection.c", "src/cursor.c", "src/cache.c",
 
 include_dirs = []
 library_dirs = []
-libraries = ['geos','geos_c','proj','iconv']
+libraries = ['geos','geos_c','proj']
 runtime_library_dirs = []
 extra_objects = []
 define_macros = []
@@ -92,10 +92,10 @@ def get_amalgamation():
     print "Downloading amalgation."
 
     # find out what's current amalgamation ZIP file
-    download_page = urllib.urlopen("http://www.gaia-gis.it/spatialite/sources.html").read()
+    download_page = urllib.urlopen("https://www.gaia-gis.it/fossil/libspatialite/index").read()
     pattern = re.compile("(libspatialite-amalgamation.*?\.zip)")
     download_file = pattern.findall(download_page)[0]
-    amalgamation_url = "http://www.gaia-gis.it/spatialite/" + download_file
+    amalgamation_url = "http://www.gaia-gis.it/gaia-sins/" + download_file
     zip_dir = string.replace(download_file,'.zip','')
     # and download it
     urllib.urlretrieve(amalgamation_url, "tmp.zip")
@@ -114,9 +114,20 @@ class MyBuildExt(build_ext):
 
     def build_extension(self, ext):
         get_amalgamation()
+        # sometimes iconv is built in, sometimes it isn't
+        if not self.compiler.has_function("iconv"):
+          ext.libraries.append("iconv")
+
+        #Default locations for Mac
+        ext.include_dirs.append("/Library/Frameworks/GEOS.framework/unix/include/")
+        ext.include_dirs.append("/Library/Frameworks/PROJ.framework/unix/include/")
+        ext.library_dirs.append("/Library/Frameworks/GEOS.framework/unix/lib")
+        ext.library_dirs.append("/Library/Frameworks/PROJ.framework/unix/lib")
+
         ext.define_macros.append(("SQLITE_ENABLE_FTS3", "1"))   # build with fulltext search enabled
         ext.define_macros.append(("SQLITE_ENABLE_RTREE", "1"))   # build with fulltext search enabled
         ext.define_macros.append(("SQLITE_ENABLE_COLUMN_METADATA", "1"))   # build with fulltext search enabled
+        ext.define_macros.append(("OMIT_FREEXL","1")) # build without FreeXL
         ext.sources.append(os.path.join(AMALGAMATION_ROOT, "sqlite3.c"))
         ext.sources.append(os.path.join(AMALGAMATION_ROOT, "spatialite.c"))
         ext.include_dirs.append(AMALGAMATION_ROOT)
@@ -155,17 +166,19 @@ def get_setup_args():
                         glob.glob("doc/code/*.py"))]
 
     py_modules = ["spatialite"]
+    define_macros.append(("VERSION",'"%s"' % PYSPATIALITE_VERSION))
     setup_args = dict(
             name = "pyspatialite",
             version = PYSPATIALITE_VERSION,
-            description = "DB-API 2.0 interface for SQLite 3.x with Spatialite 2.x",
+            description = "DB-API 2.0 interface for SQLite 3.x with Spatialite 3.x",
             long_description=long_description,
             author = "Lokkju Brennr",
             author_email = "lokkju@lokkju.com",
             license = "zlib/libpng license",
             platforms = "ALL",
             url = "http://pyspatialite.googlecode.com/",
-            download_url = "http://code.google.com/p/pyspatialite/downloads/list",
+            # no download_url, since pypi hosts it!
+            #download_url = "http://code.google.com/p/pyspatialite/downloads/list",
 
             # Description of the modules and packages in the distribution
             package_dir = {"pyspatialite": "lib"},
@@ -173,7 +186,6 @@ def get_setup_args():
                        (["pyspatialite.test.py25"], [])[sys.version_info < (2, 5)],
             scripts=[],
             data_files = data_files,
-
             ext_modules = [Extension( name="pyspatialite._spatialite",
                                       sources=sources,
                                       include_dirs=include_dirs,
