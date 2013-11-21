@@ -223,7 +223,6 @@ def get_setup_args():
             ],
             cmdclass = {"build_docs": DocBuilder},
             test_suite = "pyspatialite.tests.suite"
-
     )
 
     setup_args["cmdclass"].update(
