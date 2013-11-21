@@ -1,0 +1,13 @@
+# Directory tree where SpatiaLite will be installed.
+INSTDIR=C:\OSGeo4W
+
+# Uncomment the first for an optimized build, or the second for debug.
+OPTFLAGS=	/nologo /Ox /fp:precise /W3 /MD /D_CRT_SECURE_NO_WARNINGS \
+		/D_LARGE_FILE=1 /D_FILE_OFFSET_BITS=64 /D_LARGEFILE_SOURCE=1 \
+		/DSQLITE_ENABLE_RTREE=1 /DVERSION=\"3.0.1\" /DDLL_EXPORT
+#OPTFLAGS=	/nologo /Zi /MD /Fdspatialite.pdb /DDLL_EXPORT
+
+# Set the version number for the DLL.  Normally we leave this blank since
+# we want software that is dynamically loading the DLL to have no problem
+# with version numbers.
+VERSION=

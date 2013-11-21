@@ -32,8 +32,7 @@ if os.path.exists("extended_setup.py"):
     print "-" * 75
     sys.exit(1)
 
-from pyspatialite.test import dbapi, types, userfunctions, factory, transactions,\
-    hooks, regression, dump
+import dbapi, types, userfunctions, factory, transactions, hooks, regression, dump
 from pyspatialite import dbapi2 as sqlite
 
 def suite():
@@ -46,5 +45,7 @@ def suite():
     return unittest.TestSuite(tuple(tests))
 
 def test():
-    runner = unittest.TextTestRunner()
-    runner.run(suite())
+    unittest.TextTestRunner(verbosity=2).run(suite())
+
+if __name__ == '__main__':
+    unittest.TextTestRunner(verbosity=2).run(suite())
