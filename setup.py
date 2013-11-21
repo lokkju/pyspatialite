@@ -110,6 +110,7 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
                 yield x
 
     def build_extension(self,ext):
+        # Load includes from module directories first!
         include_dirs = []
         include_dirs.extend(self.strip_includes(self.compiler.compiler))
         include_dirs.extend(self.strip_includes(self.compiler.compiler_so))
@@ -118,6 +119,10 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
         include_dirs.extend(self.strip_includes(self.compiler.linker_exe))
         include_dirs.extend(self.strip_includes(self.compiler.preprocessor))
         self.compiler.include_dirs.extend(self.uniq(include_dirs))
+
+        if sys.platform.startswith("darwin") or not self.compiler.has_function("iconv"):
+            ext.libraries.append("iconv")
+
         build_ext.build_extension(self,ext)
 
 

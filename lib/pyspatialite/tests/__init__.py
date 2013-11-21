@@ -24,23 +24,12 @@
 import os, sys
 import unittest
 
-if os.path.exists("extended_setup.py"):
-    print "-" * 75
-    print "You should not run the test suite from the pysqlite build directory."
-    print "This does not work well because the extension module cannot be found."
-    print "Just run the test suite from somewhere else, please!"
-    print "-" * 75
-    sys.exit(1)
-
 import dbapi, types, userfunctions, factory, transactions, hooks, regression, dump
 from pyspatialite import dbapi2 as sqlite
 
 def suite():
     tests = [dbapi.suite(), types.suite(), userfunctions.suite(),
       factory.suite(), transactions.suite(), hooks.suite(), regression.suite(), dump.suite()]
-    if sys.version_info >= (2, 5, 0):
-        from pyspatialite.test.py25 import py25tests
-        tests.append(py25tests.suite())
 
     return unittest.TestSuite(tuple(tests))
 
