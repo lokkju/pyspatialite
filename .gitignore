@@ -3,4 +3,5 @@
 *.iws
 *.pyc
 build/
+*.egg-info
 *.so
