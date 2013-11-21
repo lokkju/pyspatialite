@@ -1,6 +1,6 @@
 /* connection.h - definitions for the connection type
  *
- * Copyright (C) 2004-2010 Gerhard Häring <gh@ghaering.de>
+ * Copyright (C) 2004-2010 Gerhard Hï¿½ring <gh@ghaering.de>
  *
  * This file is part of pysqlite.
  *
@@ -30,10 +30,10 @@
 #include "cache.h"
 #include "module.h"
 
-#include "sqlite3.h"
+#include "spatialite/sqlite3.h"
 #include "spatialite.h"
 
-int spatialite_init(int verbose);
+SPATIALITE_DECLARE void spatialite_init(int verbose);
 
 typedef struct
 {

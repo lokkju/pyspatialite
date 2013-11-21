@@ -28,9 +28,8 @@ import urllib
 import zipfile
 import string
 
-from distutils.core import setup, Extension, Command
-from distutils.command.build import build
-from distutils.command.build_ext import build_ext
+from setuptools import setup, find_packages, Extension, Command
+from setuptools.command.build_ext import build_ext
 
 import cross_bdist_wininst
 
@@ -38,28 +37,12 @@ import cross_bdist_wininst
 
 sqlite = "spatialite"
 
-sources = ["src/module.c", "src/connection.c", "src/cursor.c", "src/cache.c",
-           "src/microprotocols.c", "src/prepare_protocol.c", "src/statement.c",
-           "src/util.c", "src/row.c"]
-
-include_dirs = []
-library_dirs = []
-libraries = ['geos','geos_c','proj']
-runtime_library_dirs = []
-extra_objects = []
-define_macros = []
-
 long_description = \
 """Python interface to SQLite 3 + Spatialite
 
 pyspatialite is an interface to the SQLite 3.x embedded relational database engine with spatialite extensions.
 It is almost fully compliant with the Python database API version 2.0 also
 exposes the unique features of SQLite and spatialite."""
-
-if sys.platform != "win32":
-    define_macros.append(('MODULE_NAME', '"spatialite.dbapi2"'))
-else:
-    define_macros.append(('MODULE_NAME', '\\"spatialite.dbapi2\\"'))
 
 class DocBuilder(Command):
     description = "Builds the documentation"
@@ -82,63 +65,61 @@ class DocBuilder(Command):
         if rc != 0:
             print "Is sphinx installed? If not, try 'sudo easy_install sphinx'."
 
-AMALGAMATION_ROOT = "amalgamation"
+AMALGAMATION_ROOT = "amalgamation/libspatialite-amalgamation-3.0.1"
 
-def get_amalgamation():
-    """Download the Spatialite amalgamation if it isn't there, already."""
-    if os.path.exists(AMALGAMATION_ROOT):
-        return
-    os.mkdir(AMALGAMATION_ROOT)
-    print "Downloading amalgation."
+#if not self.compiler.has_function("iconv"):
+#          ext.libraries.append("iconv")
 
-    # find out what's current amalgamation ZIP file
-    download_page = urllib.urlopen("https://www.gaia-gis.it/fossil/libspatialite/index").read()
-    pattern = re.compile("(libspatialite-amalgamation.*?\.zip)")
-    download_file = pattern.findall(download_page)[0]
-    amalgamation_url = "http://www.gaia-gis.it/gaia-sins/" + download_file
-    zip_dir = string.replace(download_file,'.zip','')
-    # and download it
-    urllib.urlretrieve(amalgamation_url, "tmp.zip")
 
-    zf = zipfile.ZipFile("tmp.zip")
-    files = ["sqlite3.c", "headers/spatialite/sqlite3.h", "spatialite.c", "headers/spatialite/sqlite3ext.h","headers/spatialite/spatialite.h","headers/spatialite/gaiaaux.h","headers/spatialite/gaiaexif.h","headers/spatialite/gaiageo.h"]
-    for fn in files:
-        print "Extracting", fn
-        outf = open(AMALGAMATION_ROOT + os.sep + string.split(fn,'/')[-1], "wb")
-        outf.write(zf.read(zip_dir + '/' + fn))
-        outf.close()
-    zf.close()
-    os.unlink("tmp.zip")
-
-class MyBuildExt(build_ext):
-
-    def build_extension(self, ext):
-        get_amalgamation()
-        # sometimes iconv is built in, sometimes it isn't
-        if not self.compiler.has_function("iconv"):
-          ext.libraries.append("iconv")
-
-        #Default locations for Mac
-        ext.include_dirs.append("/Library/Frameworks/GEOS.framework/unix/include/")
-        ext.include_dirs.append("/Library/Frameworks/PROJ.framework/unix/include/")
-        ext.library_dirs.append("/Library/Frameworks/GEOS.framework/unix/lib")
-        ext.library_dirs.append("/Library/Frameworks/PROJ.framework/unix/lib")
-
-        ext.define_macros.append(("SQLITE_ENABLE_FTS3", "1"))   # build with fulltext search enabled
-        ext.define_macros.append(("SQLITE_ENABLE_RTREE", "1"))   # build with fulltext search enabled
-        ext.define_macros.append(("SQLITE_ENABLE_COLUMN_METADATA", "1"))   # build with fulltext search enabled
-        ext.define_macros.append(("OMIT_FREEXL","1")) # build without FreeXL
-        ext.sources.append(os.path.join(AMALGAMATION_ROOT, "sqlite3.c"))
-        ext.sources.append(os.path.join(AMALGAMATION_ROOT, "spatialite.c"))
-        ext.include_dirs.append(AMALGAMATION_ROOT)
-        build_ext.build_extension(self, ext)
-        
 
 #    def __setattr__(self, k, v):
 #        # Make sure we don't link against the SQLite library, no matter what setup.cfg says
 #        if self.amalgamation and k == "libraries":
 #            v = None
 #        self.__dict__[k] = v
+
+class OverrideSystemIncludeOrderBuildCommand(build_ext):
+    @staticmethod
+    def strip_includes(opts):
+        includes = []
+        for i in reversed(range(len(opts))):
+            if opts[i].startswith("-I"):
+                includes.append(opts[i].replace('^-I', ''))
+                del opts[i]
+        return includes
+
+    @staticmethod
+    def uniq(seq, idfun=None):
+        return list(OverrideSystemIncludeOrderBuildCommand._uniq(seq, idfun))
+
+    @staticmethod
+    def _uniq(seq, idfun=None):
+        seen = set()
+        if idfun is None:
+            for x in seq:
+                if x in seen:
+                    continue
+                seen.add(x)
+                yield x
+        else:
+            for x in seq:
+                x = idfun(x)
+                if x in seen:
+                    continue
+                seen.add(x)
+                yield x
+
+    def build_extension(self,ext):
+        include_dirs = []
+        include_dirs.extend(self.strip_includes(self.compiler.compiler))
+        include_dirs.extend(self.strip_includes(self.compiler.compiler_so))
+        include_dirs.extend(self.strip_includes(self.compiler.compiler_cxx))
+        include_dirs.extend(self.strip_includes(self.compiler.linker_so))
+        include_dirs.extend(self.strip_includes(self.compiler.linker_exe))
+        include_dirs.extend(self.strip_includes(self.compiler.preprocessor))
+        self.compiler.include_dirs.extend(self.uniq(include_dirs))
+        build_ext.build_extension(self,ext)
+
 
 def get_setup_args():
 
@@ -166,11 +147,10 @@ def get_setup_args():
                         glob.glob("doc/code/*.py"))]
 
     py_modules = ["spatialite"]
-    define_macros.append(("VERSION",'"%s"' % PYSPATIALITE_VERSION))
     setup_args = dict(
             name = "pyspatialite",
             version = PYSPATIALITE_VERSION,
-            description = "DB-API 2.0 interface for SQLite 3.x with Spatialite 3.x",
+            description = "DB-API 2.0 interface for SQLite 3.x with Spatialite " + PYSPATIALITE_VERSION,
             long_description=long_description,
             author = "Lokkju Brennr",
             author_email = "lokkju@lokkju.com",
@@ -181,35 +161,73 @@ def get_setup_args():
             #download_url = "http://code.google.com/p/pyspatialite/downloads/list",
 
             # Description of the modules and packages in the distribution
-            package_dir = {"pyspatialite": "lib"},
-            packages = ["pyspatialite", "pyspatialite.test"] +
-                       (["pyspatialite.test.py25"], [])[sys.version_info < (2, 5)],
+            package_dir = {"": "lib"},
+            packages = find_packages('lib', exclude = ['ez_setup', '*.tests', '*.tests.*', 'tests.*', 'tests']),
             scripts=[],
             data_files = data_files,
-            ext_modules = [Extension( name="pyspatialite._spatialite",
-                                      sources=sources,
-                                      include_dirs=include_dirs,
-                                      library_dirs=library_dirs,
-                                      runtime_library_dirs=runtime_library_dirs,
-                                      libraries=libraries,
-                                      extra_objects=extra_objects,
-                                      define_macros=define_macros
-                                      )],
-            classifiers = [
-            "Development Status :: 3 - Alpha",
-            "Intended Audience :: Developers",
-            "License :: OSI Approved :: zlib/libpng License",
-            "Operating System :: MacOS :: MacOS X",
-            "Operating System :: Microsoft :: Windows",
-            "Operating System :: POSIX",
-            "Programming Language :: C",
-            "Programming Language :: Python",
-            "Topic :: Database :: Database Engines/Servers",
-            "Topic :: Software Development :: Libraries :: Python Modules"],
-            cmdclass = {"build_docs": DocBuilder}
-            )
+            ext_modules = [
+                Extension(
+                    name="pyspatialite._spatialite",
+                    sources = [
+                        "src/module.c",
+                        "src/connection.c",
+                        "src/cursor.c",
+                        "src/cache.c",
+                        "src/microprotocols.c",
+                        "src/prepare_protocol.c",
+                        "src/statement.c",
+                        "src/util.c",
+                        "src/row.c",
+                        os.path.join(AMALGAMATION_ROOT, "sqlite3.c"),
+                        os.path.join(AMALGAMATION_ROOT, "spatialite.c")
+                    ],
+                    include_dirs = [
+                        os.path.join(AMALGAMATION_ROOT,"headers"),
+                        "/Library/Frameworks/GEOS.framework/unix/include/",
+                        "/Library/Frameworks/PROJ.framework/unix/include/",
 
-    setup_args["cmdclass"].update({"build_docs": DocBuilder, "build_ext": MyBuildExt, "cross_bdist_wininst": cross_bdist_wininst.bdist_wininst})
+                    ],
+                    library_dirs = [
+                        "/Library/Frameworks/GEOS.framework/unix/lib",
+                        "/Library/Frameworks/PROJ.framework/unix/lib"
+                    ],
+                    libraries = ['geos','geos_c','proj'],
+                    runtime_library_dirs = [],
+                    extra_objects = [],
+                    define_macros = [
+                        ("VERSION",'"%s"' % PYSPATIALITE_VERSION),
+                        ("SQLITE_ENABLE_FTS3", "1"),   # build with fulltext search enabled
+                        ("SQLITE_ENABLE_RTREE", "1"),   # build with fulltext search enabled
+                        ("SQLITE_ENABLE_COLUMN_METADATA", "1"),   # build with fulltext search enabled
+                        ("OMIT_FREEXL","1"),
+                        ('MODULE_NAME', '\\"spatialite.dbapi2\\"') if sys.platform == "win32" else ('MODULE_NAME', '"spatialite.dbapi2"')
+                    ],
+                )
+            ],
+            classifiers = [
+                "Development Status :: 3 - Alpha",
+                "Intended Audience :: Developers",
+                "License :: OSI Approved :: zlib/libpng License",
+                "Operating System :: MacOS :: MacOS X",
+                "Operating System :: Microsoft :: Windows",
+                "Operating System :: POSIX",
+                "Programming Language :: C",
+                "Programming Language :: Python",
+                "Topic :: Database :: Database Engines/Servers",
+                "Topic :: Software Development :: Libraries :: Python Modules"
+            ],
+            cmdclass = {"build_docs": DocBuilder},
+            test_suite = "pyspatialite.tests.suite"
+
+    )
+
+    setup_args["cmdclass"].update(
+        {
+            "build_docs": DocBuilder,
+            "cross_bdist_wininst": cross_bdist_wininst.bdist_wininst,
+            "build_ext": OverrideSystemIncludeOrderBuildCommand
+        }
+    )
     return setup_args
 
 def main():
