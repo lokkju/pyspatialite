@@ -1,4 +1,5 @@
-=Python interface to Spatialite=
+Python interface to Spatialite
+==============================
 
 pyspatialite is an interface to the SQLite 3.x embedded relational database engine with spatialite extensions.
 

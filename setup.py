@@ -230,7 +230,7 @@ def get_setup_args():
     py_modules = ["spatialite"]
     setup_args = dict(
             name = "pyspatialite",
-            version = PYSPATIALITE_VERSION,
+            version = PYSPATIALITE_VERSION + "-alpha-0",
             description = "DB-API 2.0 interface for SQLite 3.x with Spatialite " + PYSPATIALITE_VERSION,
             long_description=long_description,
             author = "Lokkju Brennr",
