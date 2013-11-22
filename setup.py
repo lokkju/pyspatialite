@@ -225,7 +225,7 @@ def get_setup_args():
             author_email = "lokkju@lokkju.com",
             license = "zlib/libpng license",
             platforms = "ALL",
-            url = "http://pyspatialite.googlecode.com/",
+            url = "https://github.com/lokkju/pyspatialite/",
             # no download_url, since pypi hosts it!
             #download_url = "http://code.google.com/p/pyspatialite/downloads/list",
 
