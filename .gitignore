@@ -3,5 +3,9 @@
 *.iws
 *.pyc
 build/
+dist/
+var/
+a.out
 *.egg-info
 *.so
+MANIFEST.in
