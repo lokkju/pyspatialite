@@ -35,7 +35,7 @@ import cross_bdist_wininst
 
 # If you need to change anything, it should be enough to change setup.cfg.
 
-sqlite = "spatialite"
+settings = {}
 
 long_description = \
 """Python interface to SQLite 3 + Spatialite
@@ -67,24 +67,46 @@ class DocBuilder(Command):
 
 AMALGAMATION_ROOT = "amalgamation/libspatialite-amalgamation-3.0.1"
 
-#if not self.compiler.has_function("iconv"):
-#          ext.libraries.append("iconv")
-
-
-
-#    def __setattr__(self, k, v):
-#        # Make sure we don't link against the SQLite library, no matter what setup.cfg says
-#        if self.amalgamation and k == "libraries":
-#            v = None
-#        self.__dict__[k] = v
+class HeaderNotFoundException(Exception):
+    def __init__(self,msg):
+        super(HeaderNotFoundException,self).__init__(msg)
+class LibraryNotFoundException(Exception):
+    def __init__(self,msg):
+        super(LibraryNotFoundException,self).__init__(msg)
 
 class OverrideSystemIncludeOrderBuildCommand(build_ext):
+
+    # TODO: allow user to define these options
+    #user_options = build_ext.user_options + [
+    #    ('without-proj', None, "build without PROJ4"),
+    #    ('without-geos', None, "build without GEOS"),
+    #    ('without-geosadvanced', None, "build without GEOS advanced features"),
+    #    ('without-iconv', None, "build without iconv"),
+    #    ('without-freexl', None, "build without FreeXL")
+    #]
+
+    #boolean_options = build_ext.boolean_options + ['without-proj','without-geos','without-geosadvanced','without-iconv','without-freexl']
+
+    def initialize_options(self):
+        self.without_proj4 = 0
+        self.without_geos = 0
+        self.without_geosadvanced = 0
+        self.without_iconv = 0
+        self.without_freexl = 0
+
+        build_ext.initialize_options(self)
+        a = 1
+
+    def finalize_options(self):
+        build_ext.finalize_options(self)
+
+
     @staticmethod
     def strip_includes(opts):
         includes = []
         for i in reversed(range(len(opts))):
             if opts[i].startswith("-I"):
-                includes.append(opts[i].replace('^-I', ''))
+                includes.append(opts[i].replace('-I', ''))
                 del opts[i]
         return includes
 
@@ -109,6 +131,23 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
                 seen.add(x)
                 yield x
 
+    def check_header(self, header):
+        for dir in self.compiler.include_dirs:
+            if os.path.exists(os.path.join(dir,header)):
+                return True
+        for dir in self.include_dirs:
+            if os.path.exists(os.path.join(dir,header)):
+                return True
+
+        raise HeaderNotFoundException("cannot find %s, bailing out" % header)
+
+    def check_lib(self, ext,func, lib, msg, libz):
+        if self.compiler.has_function(func,libraries=libz + [lib],library_dirs=self.compiler.library_dirs + ext.library_dirs):
+            ext.libraries.append(lib)
+            ext.libraries.extend(libz)
+            return True
+        raise LibraryNotFoundException("cannot find function '%s' in '%s': %s" % (func,lib,msg))
+
     def build_extension(self,ext):
         # Load includes from module directories first!
         include_dirs = []
@@ -120,8 +159,33 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
         include_dirs.extend(self.strip_includes(self.compiler.preprocessor))
         self.compiler.include_dirs.extend(self.uniq(include_dirs))
 
-        if sys.platform.startswith("darwin") or not self.compiler.has_function("iconv"):
-            ext.libraries.append("iconv")
+        if self.without_proj4:
+            ext.extra_compile_args.append("-DOMIT_PROJ")
+        else:
+            self.check_header("proj_api.h")
+            self.check_lib(ext,"pj_init_plus", "proj", "'libproj' is required but it doesn't seem to be installed on this system.",["m"])
+
+
+        if self.without_geos:
+            ext.extra_compile_args.append("-DOMIT_GEOS")
+        else:
+            self.check_header("geos_c.h")
+            self.check_lib(ext,"GEOSTopologyPreserveSimplify","geos_c","'libgeos_c' is required but it doesn't seem to be installed on this system.",["m","geos"])
+            if not self.without_geosadvanced:
+                ext.extra_compile_args.append("-DGEOS_ADVANCED")
+                self.check_lib(ext,"GEOSCoveredBy","geos_c","obsolete 'libgeos_c' (< v.3.3.0). please retry specifying: --without-geosadvanced.",["m","geos"])
+
+        if self.without_iconv:
+            ext.extra_compile_args.append("-DOMIT_ICONV")
+        else:
+            if sys.platform.startswith("darwin") or not self.compiler.has_function("iconv"):
+                ext.libraries.append("iconv")
+
+        if self.without_freexl:
+            ext.extra_compile_args.append("-DOMIT_FREEXL")
+        else:
+            self.check_header("freexl.h")
+            self.check_lib(ext,"freexl_open","freexl","'libfreexl' is required but it doesn't seem to be installed on this system.",["m"])
 
         build_ext.build_extension(self,ext)
 
@@ -187,16 +251,9 @@ def get_setup_args():
                         os.path.join(AMALGAMATION_ROOT, "spatialite.c")
                     ],
                     include_dirs = [
-                        os.path.join(AMALGAMATION_ROOT,"headers"),
-                        "/Library/Frameworks/GEOS.framework/unix/include/",
-                        "/Library/Frameworks/PROJ.framework/unix/include/",
-
+                        os.path.join(AMALGAMATION_ROOT,"headers")
                     ],
-                    library_dirs = [
-                        "/Library/Frameworks/GEOS.framework/unix/lib",
-                        "/Library/Frameworks/PROJ.framework/unix/lib"
-                    ],
-                    libraries = ['geos','geos_c','proj'],
+                    library_dirs = [],
                     runtime_library_dirs = [],
                     extra_objects = [],
                     define_macros = [
@@ -204,7 +261,6 @@ def get_setup_args():
                         ("SQLITE_ENABLE_FTS3", "1"),   # build with fulltext search enabled
                         ("SQLITE_ENABLE_RTREE", "1"),   # build with fulltext search enabled
                         ("SQLITE_ENABLE_COLUMN_METADATA", "1"),   # build with fulltext search enabled
-                        ("OMIT_FREEXL","1"),
                         ('MODULE_NAME', '\\"spatialite.dbapi2\\"') if sys.platform == "win32" else ('MODULE_NAME', '"spatialite.dbapi2"')
                     ],
                 )
