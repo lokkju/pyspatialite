@@ -21,3 +21,7 @@ pip install --pre pyspatialite
 ```
 
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/lokkju/pyspatialite/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
