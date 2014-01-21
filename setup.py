@@ -162,7 +162,7 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
 
     def build_extension(self,ext):
         # Load includes from module directories first!
-        include_dirs = []
+        include_dirs = ['/usr/local/include', '/usr/include']
         include_dirs.extend(self.strip_includes(self.compiler.compiler))
         include_dirs.extend(self.strip_includes(self.compiler.compiler_so))
         include_dirs.extend(self.strip_includes(self.compiler.compiler_cxx))
