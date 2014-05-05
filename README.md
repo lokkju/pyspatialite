@@ -20,8 +20,22 @@ In some cases, the most recent pypi release may be in a pre-release stage.  In o
 pip install --pre pyspatialite
 ```
 
+Usage
+-----
+pyspatialite extends the sqlite3 interface, and so can be used in place of sqlite3 when modelling spatial information. The main interface is contained in the `pyspatialite.dbapi2` package:
 
+```python
+import pyspatialite.dbapi2 as db
 
+con = db.connect(':memory:')
+
+# Test that the spatialite extension has been loaded:
+cursor = con.execute('SELECT sqlite_version(), spatialite_version()')
+print cursor.fetchall()
+# Output should be something like: [(u'3.7.9', u'3.0.1')]
+```
+
+For more information on simple pyspatialite usage, see http://www.gaia-gis.it/spatialite-2.4.0-4/splite-python.html
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/lokkju/pyspatialite/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
