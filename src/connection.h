@@ -33,12 +33,11 @@
 #include "spatialite/sqlite3.h"
 #include "spatialite.h"
 
-SPATIALITE_DECLARE void spatialite_init(int verbose);
-
 typedef struct
 {
     PyObject_HEAD
     sqlite3* db;
+    void *slconn;
 
     /* 1 if we are currently within a transaction, i. e. if a BEGIN has been
      * issued */
