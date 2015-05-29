@@ -85,6 +85,7 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
         ('with-geosadvanced=', None, "build with GEOS advanced features (default: True)"),
         ('with-iconv=', None, "build with iconv (default: depends on OS)"),
         ('with-freexl=', None, "build with FreeXL (default: False)")
+        ('with-spatialit-init-ex=', None, "use spatialite_init_ex() instead of deprecated spatialite_init() method (default: False)")
     ]
 
     def initialize_options(self):
@@ -93,6 +94,7 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
         self.with_geosadvanced = 0
         self.with_iconv = 1
         self.with_freexl = 0
+        self.with_spatialite_init_ex = 0
 
         build_ext.initialize_options(self)
 
@@ -102,6 +104,7 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
         self.with_geosadvanced = self.truthify(self.with_geosadvanced)
         self.with_iconv = self.truthify(self.with_iconv)
         self.with_freexl = self.truthify(self.with_freexl)
+        self.with_spatialite_init_ex = self.truthify(self.with_spatialite_init_ex)
 
         build_ext.finalize_options(self)
 
@@ -198,6 +201,13 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
             self.check_lib(ext,"freexl_open","freexl","'libfreexl' is required but it doesn't seem to be installed on this system.",["m"])
         else:
             ext.extra_compile_args.append("-DOMIT_FREEXL")
+
+        if self.with_spatialite_init_ex:
+            self.check_header(ext,"spatialite.h")
+            self.check_lib(ext,"spatialite_init_ex","spatialite","'libspatialite' is required but it doesn't seem to be installed on this system.",["m"])
+            ext.extra_compile_args.append("-DSPATIALITE_HAS_INIT_EX=1")
+        else:
+            ext.extra_compile_args.append("-DSPATIALITE_HAS_INIT_EX=0")
 
         build_ext.build_extension(self,ext)
 
