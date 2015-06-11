@@ -84,7 +84,7 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
         ('with-geos=', None, "build with GEOS (default: True)"),
         ('with-geosadvanced=', None, "build with GEOS advanced features (default: True)"),
         ('with-iconv=', None, "build with iconv (default: depends on OS)"),
-        ('with-freexl=', None, "build with FreeXL (default: False)")
+        ('with-freexl=', None, "build with FreeXL (default: False)"),
         ('with-spatialit-init-ex=', None, "use spatialite_init_ex() instead of deprecated spatialite_init() method (default: False)")
     ]
 
