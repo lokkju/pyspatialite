@@ -30,7 +30,7 @@
 #include "cache.h"
 #include "module.h"
 
-#include "spatialite/sqlite3.h"
+#include "sqlite3.h"
 #include "spatialite.h"
 
 typedef struct

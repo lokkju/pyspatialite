@@ -65,8 +65,6 @@ class DocBuilder(Command):
         if rc != 0:
             print "Is sphinx installed? If not, try 'sudo easy_install sphinx'."
 
-AMALGAMATION_ROOT = "amalgamation/libspatialite-amalgamation-3.0.1"
-
 TRUTHY = ("yes", "true", "t", "1")
 
 class HeaderNotFoundException(Exception):
@@ -94,7 +92,7 @@ class OverrideSystemIncludeOrderBuildCommand(build_ext):
         self.with_geosadvanced = 0
         self.with_iconv = 1
         self.with_freexl = 0
-        self.with_spatialite_init_ex = 0
+        self.with_spatialite_init_ex = 1
 
         build_ext.initialize_options(self)
 
@@ -268,13 +266,9 @@ def get_setup_args():
                         "src/prepare_protocol.c",
                         "src/statement.c",
                         "src/util.c",
-                        "src/row.c",
-                        os.path.join(AMALGAMATION_ROOT, "sqlite3.c"),
-                        os.path.join(AMALGAMATION_ROOT, "spatialite.c")
+                        "src/row.c"
                     ],
-                    include_dirs = [
-                        os.path.join(AMALGAMATION_ROOT,"headers")
-                    ],
+                    include_dirs = [],
                     library_dirs = [],
                     runtime_library_dirs = [],
                     extra_objects = [],
@@ -282,7 +276,6 @@ def get_setup_args():
                         ("VERSION",'"%s"' % PYSPATIALITE_VERSION),
                         ("SQLITE_ENABLE_RTREE", "1"),   # build with fulltext search enabled
                         ("NDEBUG","1"),
-                        ("SPL_AMALGAMATION","1"),
                         ('MODULE_NAME', '\\"spatialite.dbapi2\\"') if sys.platform == "win32" else ('MODULE_NAME', '"spatialite.dbapi2"')
                     ],
                 )
