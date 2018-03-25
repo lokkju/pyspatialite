@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 #
 # Cross-compile and build pysqlite installers for win32 on Linux or Mac OS X.
 #
@@ -34,37 +34,18 @@ def execute(cmd):
     print cmd
     return os.system(cmd)
 
-def get_amalgamation():
-    """Download the SQLite amalgamation if it isn't there, already."""
-    AMALGAMATION_ROOT = "amalgamation"
-    if os.path.exists(AMALGAMATION_ROOT):
-        return
-    os.mkdir(AMALGAMATION_ROOT)
-    print "Downloading amalgation."
-    urllib.urlretrieve("http://sqlite.org/sqlite-amalgamation-3_6_2.zip", "tmp.zip")
-    zf = zipfile.ZipFile("tmp.zip")
-    files = ["sqlite3.c", "sqlite3.h"]
-    for fn in files:
-        print "Extracting", fn
-        outf = open(AMALGAMATION_ROOT + os.sep + fn, "wb")
-        outf.write(zf.read(fn))
-        outf.close()
-    zf.close()
-    os.unlink("tmp.zip")
-
 def compile_module(pyver):
     VER = pyver.replace(".", "")
     INC = "%s/python%s/include" % (CROSS_TOOLS, VER)
     vars = locals()
     vars.update(globals())
-    cmd = '%(CC)s -mno-cygwin %(OPT)s -mdll -DMODULE_NAME=\\"pysqlite2._sqlite\\" -DSQLITE_ENABLE_RTREE=1 -DSQLITE_ENABLE_FTS3=1 -I amalgamation -I %(INC)s -I . %(SRC)s -L %(CROSS_TOOLS)s/python%(VER)s/libs -lpython%(VER)s -o build/%(LIBDIR)s/pysqlite2/_sqlite.pyd' % vars
+    cmd = '%(CC)s -mno-cygwin %(OPT)s -mdll -DMODULE_NAME=\\"pysqlite2._sqlite\\" -DSQLITE_ENABLE_RTREE=1 -DSQLITE_ENABLE_FTS3=1 -I %(INC)s -I . %(SRC)s -L %(CROSS_TOOLS)s/python%(VER)s/libs -lpython%(VER)s -o build/%(LIBDIR)s/pysqlite2/_sqlite.pyd' % vars
     execute(cmd)
     execute("%(STRIP)s build/%(LIBDIR)s/pysqlite2/_sqlite.pyd" % vars)
 
 def main():
     vars = locals()
     vars.update(globals())
-    get_amalgamation()
     for ver in ["2.5", "2.6"]:
         execute("rm -rf build")
         # First, compile the host version. This is just to get the .py files in place.
