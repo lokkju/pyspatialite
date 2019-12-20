@@ -1,3 +1,6 @@
+# This repository is being archived
+Python and Spatialite has come a long way, and this package is no longer as useful as it once was.
+
 Python interface to Spatialite
 ======
 
